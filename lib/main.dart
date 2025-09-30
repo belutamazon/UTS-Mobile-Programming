@@ -1,17 +1,30 @@
-import 'package:flutter/material.dart';
+ import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart'; // <-- Paket inti Firebase
+import 'firebase_options.dart'; // <-- Konfigurasi proyek Anda
+import 'auth_gate.dart'; // <-- Gerbang logika untuk login
 
-import 'messagePage.dart'; // file inbox
-
+// 1. Fungsi main harus 'async' untuk menunggu proses inisialisasi
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(MyApp());
+  // 2. Memastikan semua widget siap sebelum Firebase dijalankan
+  WidgetsFlutterBinding.ensureInitialized();  
+  
+  // 3. Menunggu koneksi ke Firebase selesai sebelum aplikasi berjalan
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
+  // 4. Menjalankan aplikasi SETELAH Firebase siap
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      title: 'X Clone',
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color.fromARGB(255, 0, 0, 0),
         appBarTheme: const AppBarTheme(
@@ -23,8 +36,12 @@ class MyApp extends StatelessWidget {
           ),
           iconTheme: IconThemeData(color: Colors.white),
         ),
+        colorScheme: ColorScheme.fromSwatch(
+          primarySwatch: Colors.blue,
+        ).copyWith(secondary: Colors.blueAccent),
       ),
-      home: MessagesPage(), 
+      // Titik awal aplikasi diubah ke AuthGate untuk memeriksa status login
+      home: const AuthGate(), 
     );
   }
 }
