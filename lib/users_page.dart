@@ -1,49 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'messagePage.dart';
+import 'messagePage.dart'; // Pastikan path import ini benar
 
 class UsersPage extends StatelessWidget {
-  final String currentUserId; // user yg login
-
+  final String currentUserId;
   const UsersPage({super.key, required this.currentUserId});
 
-  /// Cari atau buat chatId dengan user lain
+  /// Fungsi untuk membuat atau mendapatkan ID chat yang konsisten
   Future<String> _createOrGetChat(String otherUserId) async {
-  // 1. Ambil ID pengguna saat ini dan pengguna lain.
-  List<String> userIds = [currentUserId, otherUserId];
-  
-  // 2. Urutkan ID tersebut berdasarkan abjad untuk memastikan konsistensi.
-  userIds.sort();
-  
-  // 3. Gabungkan ID yang sudah diurutkan dengan underscore.
-  // Ini akan menghasilkan ID yang SELALU SAMA untuk pasangan pengguna ini.
-  String chatId = userIds.join('_');
+    List<String> userIds = [currentUserId, otherUserId];
+    userIds.sort();
+    String chatId = userIds.join('_');
 
-  // 4. Langsung menunjuk ke dokumen chat dengan ID yang sudah pasti.
-  final chatRef = FirebaseFirestore.instance.collection('chats').doc(chatId);
-  final docSnap = await chatRef.get();
+    final chatRef = FirebaseFirestore.instance.collection('chats').doc(chatId);
+    final docSnap = await chatRef.get();
 
-  // 5. Jika dokumen chat belum ada, buat yang baru dengan ID tersebut.
-  if (!docSnap.exists) {
-    await chatRef.set({
-      'members': [currentUserId, otherUserId],
-      'lastMessage': '',
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    if (!docSnap.exists) {
+      await chatRef.set({
+        'members': [currentUserId, otherUserId],
+        'lastMessage': '',
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+    return chatId;
   }
-
-  // 6. Kembalikan ID yang konsisten.
-  return chatId;
-}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Users")),
+      appBar: AppBar(title: const Text("Direct Messages")),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('users').snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
+          if (snapshot.hasError) {
+            return const Center(child: Text("Error"));
+          }
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -52,24 +44,36 @@ class UsersPage extends StatelessWidget {
           return ListView.builder(
             itemCount: users.length,
             itemBuilder: (context, index) {
-              var user = users[index];
-              if (user.id == currentUserId) return Container();
+              var userDoc = users[index];
+              // Asumsi setiap dokumen user memiliki field 'email' dan 'name'
+              final userEmail = userDoc.get('email') ?? 'No Email';
+              final userName = userDoc.get('name') ?? 'No Name';
+              final userId = userDoc.id; // ID dokumen user adalah UID-nya
+
+              // Jangan tampilkan diri sendiri di daftar
+              if (userId == currentUserId) {
+                return const SizedBox.shrink(); // Widget kosong
+              }
 
               return ListTile(
-                title: Text(user['name'],style: TextStyle(color: Colors.white),),
-                subtitle: Text(user['email'],style: TextStyle(color: Colors.grey),),
+                title: Text(userName, style: const TextStyle(color: Colors.white)),
+                subtitle: Text(userEmail, style: const TextStyle(color: Colors.grey)),
                 onTap: () async {
-                  String chatId = await _createOrGetChat(user.id);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => MessagePage(
-                        chatId: chatId,
-                        currentUserId: currentUserId,
-                        otherUsername: user['name'],
+                  final chatId = await _createOrGetChat(userId);
+                  
+                  // Pengecekan keamanan sebelum navigasi
+                  if (context.mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MessagePage(
+                          chatId: chatId,
+                          currentUserId: currentUserId,
+                          otherUsername: userName,
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  }
                 },
               );
             },

@@ -6,7 +6,7 @@ import 'create_post_page.dart';
 import 'profile_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'users_page.dart'; 
+import 'users_page.dart';   
 
 // Placeholder pages untuk menghindari error jika file tidak ada
 class SearchPage extends StatelessWidget { const SearchPage({super.key}); @override Widget build(BuildContext context) => const Center(child: Text("Search Page", style: TextStyle(color: Colors.white)));}
@@ -30,13 +30,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) {
-      print("⚠️ STATUS LOGIN: TIDAK ADA PENGGUNA YANG LOGIN (NULL)");
-    } else {
-      print("✅ STATUS LOGIN: ${currentUser.email} (UID: ${currentUser.uid})");
-    }
   }
 
   @override
@@ -115,6 +108,18 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
+    // Ambil ID pengguna saat ini di dalam method build agar selalu terbaru
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    // Jika karena suatu alasan user null (misalnya saat proses logout)
+    // tampilkan loading untuk mencegah error.
+    if (currentUser == null) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -150,40 +155,46 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               )
             : null,
       ),
-      body: _selectedIndex == 0
-          ? TabBarView(
-              controller: _tabController,
-              children: [
-                StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('threads')
-                      .orderBy('timestamp', descending: true)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                      return const Center(child: Text("No posts yet.", style: TextStyle(color: Colors.white)));
-                    }
-                    if (snapshot.hasError) {
-                      return const Center(child: Text("Something went wrong."));
-                    }
-
-                    final posts = snapshot.data!.docs;
-                    return ListView.builder(
-                      itemCount: posts.length,
-                      itemBuilder: (context, index) {
-                        final postData = posts[index].data() as Map<String, dynamic>;
-                        return buildPost(postData);
-                      },
-                    );
-                  },
-                ),
-                const Center(child: Text("Following Feed", style: TextStyle(color: Colors.white))),
-              ],
-            )
-          : _pages[_selectedIndex],
+      // PERBAIKAN UTAMA: Menggunakan IndexedStack untuk menampilkan halaman
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          // Index 0: Home (dengan TabBarView)
+          TabBarView(
+            controller: _tabController,
+            children: [
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('threads')
+                    .orderBy('timestamp', descending: true)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  // ... (logika StreamBuilder Anda untuk postingan tidak perlu diubah)
+                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                  final posts = snapshot.data!.docs;
+                  return ListView.builder(
+                    itemCount: snapshot.data!.docs.length,
+                    itemBuilder: (context, index) {
+                      final postData = posts[index].data() as Map<String, dynamic>;
+                      return buildPost(postData);
+                    },
+                  );
+                },
+              ),
+              const Center(child: Text("Following Feed", style: TextStyle(color: Colors.white))),
+            ],
+          ),
+          // Index 1: Search
+          const SearchPage(),
+          // Index 2: Community
+          const CommunityListPage(),
+          // Index 3: Notifications
+          const NotificationPage(),
+          // Index 4: Messages
+          // ID PENGGUNA SELALU DIAMBIL YANG TERBARU DAN BENAR DI SINI
+          UsersPage(currentUserId: currentUser.uid),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.black,
         type: BottomNavigationBarType.fixed,

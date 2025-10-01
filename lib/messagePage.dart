@@ -77,12 +77,7 @@ class _MessagePageState extends State<MessagePage> {
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     var msg = messages[index];
-                    print("--- Memeriksa Pesan ---");
-                    print("Isi Pesan: ${msg['text']}");
-                    print("ID Pengirim (dari Firestore): ${msg['senderId']}");
-                    print("ID User Saat Ini (di Aplikasi): ${widget.currentUserId}");
-                    bool isMe = msg['senderId'] == widget.currentUserId;
-                    print("Apakah ini pesan saya? $isMe");
+                    bool isMe = msg['senderId'] == widget.currentUserId;  
 
                     return Align(
                       alignment:
@@ -99,7 +94,7 @@ class _MessagePageState extends State<MessagePage> {
                           msg['text'],
                           style: TextStyle(
                           // Jika ini pesan saya, teksnya putih. Jika pesan orang lain, teksnya hitam.
-                          color: isMe ? Colors.white : Colors.white
+                          color: isMe ? Colors.white : Colors.black
                           ),
                         ),
                       )
