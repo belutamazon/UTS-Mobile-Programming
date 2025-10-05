@@ -1,0 +1,76 @@
+import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
+
+class DefaultFirebaseOptions {
+  static FirebaseOptions get currentPlatform {
+    if (kIsWeb) {
+      return web;
+    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return android;
+      case TargetPlatform.iOS:
+        return ios;
+      case TargetPlatform.macOS:
+        return macos;
+      case TargetPlatform.windows:
+        return windows;
+      case TargetPlatform.linux:
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for linux - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
+      default:
+        throw UnsupportedError(
+          'DefaultFirebaseOptions are not supported for this platform.',
+        );
+    }
+  }
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyDOFq_RKXnozBMUyNQRrcQ0C0Bzr3sbscw',
+    appId: '1:694295102838:web:2c17c0aef73b7d67db6657',
+    messagingSenderId: '694295102838',
+    projectId: 'fir-test-ac383',
+    authDomain: 'fir-test-ac383.firebaseapp.com',
+    storageBucket: 'fir-test-ac383.firebasestorage.app',
+    measurementId: 'G-WRWRKF84RY',
+  );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyBnkgUi16_oTArs0xHfuwFxUUTXwNFnGto',
+    appId: '1:694295102838:android:24c36ad8695bd7d3db6657',
+    messagingSenderId: '694295102838',
+    projectId: 'fir-test-ac383',
+    storageBucket: 'fir-test-ac383.firebasestorage.app',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyBYhRQlMaX86FlW4_AtUoYG9ThMyMkdH_c',
+    appId: '1:694295102838:ios:bc234a3d3f309fa4db6657',
+    messagingSenderId: '694295102838',
+    projectId: 'fir-test-ac383',
+    storageBucket: 'fir-test-ac383.firebasestorage.app',
+    iosBundleId: 'com.example.proyekSosmed',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyBYhRQlMaX86FlW4_AtUoYG9ThMyMkdH_c',
+    appId: '1:694295102838:ios:bc234a3d3f309fa4db6657',
+    messagingSenderId: '694295102838',
+    projectId: 'fir-test-ac383',
+    storageBucket: 'fir-test-ac383.firebasestorage.app',
+    iosBundleId: 'com.example.proyekSosmed',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyDOFq_RKXnozBMUyNQRrcQ0C0Bzr3sbscw',
+    appId: '1:694295102838:web:32dec9d2e688b0c4db6657',
+    messagingSenderId: '694295102838',
+    projectId: 'fir-test-ac383',
+    authDomain: 'fir-test-ac383.firebaseapp.com',
+    storageBucket: 'fir-test-ac383.firebasestorage.app',
+    measurementId: 'G-K1VTXEN30W',
+  );
+
+}
